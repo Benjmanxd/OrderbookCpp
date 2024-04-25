@@ -1,5 +1,4 @@
-#ifndef _LEVELINFO_H_
-#define _LEVELINFO_H_
+#pragma once
 
 #include <vector>
 
@@ -26,5 +25,3 @@ private:
   LevelInfos m_asks;
   LevelInfos m_bids;
 };
-
-#endif

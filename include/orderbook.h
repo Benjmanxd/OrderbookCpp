@@ -1,5 +1,4 @@
-#ifndef _ORDERBOOK_H_
-#define _ORDERBOOK_H_
+#pragma once
 
 #include <map>
 #include <unordered_map>
@@ -29,5 +28,3 @@ private:
   std::map<Price, OrderPtrs, std::greater<Price>> m_bids;
   std::unordered_map<OrderId, OrderEntry> m_orders;
 };
-
-#endif

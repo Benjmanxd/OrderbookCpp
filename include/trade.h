@@ -1,5 +1,4 @@
-#ifndef _TRADE_H_
-#define _TRADE_H_
+#pragma once
 
 #include <vector>
 
@@ -25,5 +24,3 @@ private:
 };
 
 using Trades = std::vector<Trade>;
-
-#endif

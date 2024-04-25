@@ -1,5 +1,4 @@
-#ifndef _ORDER_H_
-#define _ORDER_H_
+#pragma once
 
 #include <memory>
 #include <list>
@@ -53,5 +52,3 @@ private:
   Price m_price;
   Quantity m_quantity;
 };
-
-#endif
