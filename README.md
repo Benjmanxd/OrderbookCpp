@@ -7,14 +7,16 @@
 - [ ] support overfill checking
 - [ ] multithreading
 - [ ] gui interface
-- [ ] database
+- [ ] database (MySQL, Redis)
 
 ### Supported order types
 
-- [x] Fill and Kill
-- [x] Good till Cancel
-- [x] Market
-- [ ] Fill or Kill
+- [x] Fill and Kill (fill whatever quantity it can and kill the order) (IOC)
+- [ ] Fill or Kill (fill all quantity or none, then kill immediately) (AON, IOC)
+- [x] Good till Cancel (remain active until filled or cancelled)
+- [ ] Good for Day (fill until the end of the trading day)
+- [x] Market (fill at best available price)
+- [ ] Limit (fill at specific price)
 
 ### Build procedure
 
