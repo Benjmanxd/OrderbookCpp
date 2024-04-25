@@ -13,6 +13,7 @@
 
 - [x] Fill and Kill
 - [x] Good till Cancel
+- [x] Market
 - [ ] Fill or Kill
 
 ### Build procedure

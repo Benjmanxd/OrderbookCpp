@@ -20,7 +20,9 @@ public:
   Quantity GetInitialQuantity() const { return m_initial_quantity; }
   Quantity GetRemainingQuantity() const { return m_remaining_quantity; }
   bool IsFilled() const { return m_remaining_quantity == 0; }
-  bool Fill(Quantity quantity);
+
+  void Fill(Quantity);
+  void PriceAdjust(Price);
 
 private:
   OrderType m_order_type;

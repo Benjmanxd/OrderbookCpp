@@ -9,6 +9,7 @@ using OrderId = uint64_t;
 enum class OrderType : uint8_t {
   GoodTillCancel,
   FillAndKill,
+  Market,
 };
 
 enum class Side : uint8_t {

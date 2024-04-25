@@ -6,6 +6,18 @@ Trades Orderbook::AddOrder(const OrderPtr &order) {
   if (m_orders.count(order->GetOrderId()))
     return {};
 
+  if (order->GetOrderType() == OrderType::Market) {
+    if (order->GetSide() == Side::Buy && !m_asks.empty()) {
+      const auto& [price, _] = *m_asks.rbegin();
+      order->PriceAdjust(price);
+    } else if (order->GetSide() == Side::Sell && !m_bids.empty()) {
+      const auto& [price, _] = *m_bids.rbegin();
+      order->PriceAdjust(price);
+    } else {
+      return {};
+    }
+  }
+
   if (order->GetOrderType() == OrderType::FillAndKill &&
       !Match(order->GetSide(), order->GetPrice()))
     return {};
@@ -90,15 +102,15 @@ Trades Orderbook::MatchOrders() {
     if (m_asks.empty() || m_bids.empty())
       break;
 
-    auto &[ask_price, asks] = *m_asks.begin();
-    auto &[bid_price, bids] = *m_bids.begin();
+    auto &[ask_price, ask_orders] = *m_asks.begin();
+    auto &[bid_price, bid_orders] = *m_bids.begin();
     if (ask_price > bid_price) {
       break;
     }
 
-    while (asks.size() && bids.size()) {
-      auto &ask = asks.front();
-      auto &bid = bids.front();
+    while (ask_orders.size() && bid_orders.size()) {
+      auto &ask = ask_orders.front();
+      auto &bid = bid_orders.front();
 
       Quantity quantity =
           std::min(ask->GetRemainingQuantity(), bid->GetRemainingQuantity());
@@ -106,17 +118,17 @@ Trades Orderbook::MatchOrders() {
       bid->Fill(quantity);
 
       if (ask->IsFilled()) {
-        asks.pop_front();
+        ask_orders.pop_front();
         m_orders.erase(ask->GetOrderId());
       }
       if (bid->IsFilled()) {
-        bids.pop_front();
+        bid_orders.pop_front();
         m_orders.erase(bid->GetOrderId());
       }
 
-      if (asks.empty())
+      if (ask_orders.empty())
         m_asks.erase(ask_price);
-      if (bids.empty())
+      if (bid_orders.empty())
         m_bids.erase(bid_price);
 
       trades.emplace_back(
@@ -126,16 +138,16 @@ Trades Orderbook::MatchOrders() {
   }
 
   if (!m_asks.empty()) {
-    auto &[_, asks] = *m_asks.begin();
-    auto &order = asks.front();
+    auto &[_, ask_orders] = *m_asks.begin();
+    auto &order = ask_orders.front();
     if (order->GetOrderType() == OrderType::FillAndKill) {
       CancelOrder(order->GetOrderId());
     }
   }
 
   if (!m_bids.empty()) {
-    auto &[_, bids] = *m_bids.begin();
-    auto &order = bids.front();
+    auto &[_, bid_orders] = *m_bids.begin();
+    auto &order = bid_orders.front();
     if (order->GetOrderType() == OrderType::FillAndKill) {
       CancelOrder(order->GetOrderId());
     }
