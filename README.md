@@ -19,13 +19,7 @@
 
 **Please make sure to install cmake 3.27 in your system**
 
-- NixOS
-
-  ```
-  # cmake -B . build -DBUILD_NIX=ON && cmake --build build -j
-  ```
-
-- Other Linux Distro
+- Linux
 
   ```
   # cmake -B . build && cmake --build build -j

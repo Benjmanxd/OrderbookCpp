@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
 
-option(BUILD_NIX "build in nixos" OFF)
-if (BUILD_NIX)
-  set(CMAKE_CXX_COMPILER "/etc/profiles/per-user/$ENV{USER}/bin/g++")
-  set(CMAKE_C_COMPILER "/etc/profiles/per-user/$ENV{USER}/bin/gcc")
-endif()
-
 project(
   Orderbook
   VERSION 1.0
