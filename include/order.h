@@ -2,6 +2,7 @@
 
 #include <list>
 #include <memory>
+#include <vector>
 
 #include "types.h"
 
@@ -31,6 +32,7 @@ private:
   Quantity m_initial_quantity;
 };
 
+using OrderIds = std::vector<OrderId>;
 using OrderPtr = std::shared_ptr<Order>;
 using OrderPtrs = std::list<OrderPtr>;
 

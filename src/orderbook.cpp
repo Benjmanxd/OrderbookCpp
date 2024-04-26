@@ -1,6 +1,16 @@
 #include "orderbook.h"
 
+#include <chrono>
+#include <ctime>
 #include <numeric>
+
+Orderbook::Orderbook() : m_prune_thread{[this] { PruneDayOrders(); }} {}
+
+Orderbook::~Orderbook() {
+  m_closed.store(true, std::memory_order_release);
+  m_closed_cv.notify_one();
+  m_prune_thread.join();
+}
 
 Trades Orderbook::AddOrder(const OrderPtr &order) {
   if (m_orders.count(order->GetOrderId()))
@@ -36,6 +46,28 @@ Trades Orderbook::AddOrder(const OrderPtr &order) {
 }
 
 void Orderbook::CancelOrder(OrderId order_id) {
+  std::scoped_lock l(m_order_mutex);
+  CancelOrderInternal(order_id);
+}
+
+void Orderbook::CancelOrders(const OrderIds& order_ids) {
+  std::scoped_lock l(m_order_mutex);
+  for (OrderId id : order_ids) {
+    CancelOrder(id);
+  }
+}
+
+Trades Orderbook::MatchOrder(OrderModify order) {
+  auto iter = m_orders.find(order.GetOrderId());
+  if (iter == m_orders.end())
+    return {};
+
+  const auto &[order_ptr, _] = iter->second;
+  CancelOrder(order_ptr->GetOrderId());
+  return AddOrder(order.Convert(order_ptr->GetOrderType()));
+}
+
+void Orderbook::CancelOrderInternal(OrderId order_id) {
   auto iter = m_orders.find(order_id);
   if (iter == m_orders.end())
     return;
@@ -56,16 +88,6 @@ void Orderbook::CancelOrder(OrderId order_id) {
       m_asks.erase(price);
   }
   m_orders.erase(iter);
-}
-
-Trades Orderbook::MatchOrder(OrderModify order) {
-  auto iter = m_orders.find(order.GetOrderId());
-  if (iter == m_orders.end())
-    return {};
-
-  const auto &[order_ptr, _] = iter->second;
-  CancelOrder(order_ptr->GetOrderId());
-  return AddOrder(order.Convert(order_ptr->GetOrderType()));
 }
 
 OrderbookLevelInfos Orderbook::GetLevelInfos() const {
@@ -127,8 +149,9 @@ Trades Orderbook::MatchOrders() {
       if (bid_orders.empty())
         m_bids.erase(bid_price);
 
-      trades.emplace_back(TradeInfo{ask->GetOrderId(), ask->GetPrice(), quantity},
-                          TradeInfo{bid->GetOrderId(), bid->GetPrice(), quantity});
+      trades.emplace_back(
+          TradeInfo{ask->GetOrderId(), ask->GetPrice(), quantity},
+          TradeInfo{bid->GetOrderId(), bid->GetPrice(), quantity});
     }
   }
 
@@ -149,4 +172,29 @@ Trades Orderbook::MatchOrders() {
   }
 
   return trades;
+}
+
+void Orderbook::PruneDayOrders() {
+  while (true) {
+    const auto tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::tm *now = std::localtime(&tt);
+    std::tm end {0, 0, 16, now->tm_hour < 16 ? now->tm_mday : now->tm_mday+1, now->tm_mon, now->tm_year};
+
+    {
+      std::unique_lock<std::mutex> l(m_order_mutex);
+      if (m_closed.load(std::memory_order_acquire) || m_closed_cv.wait_until(l, std::chrono::system_clock::from_time_t(std::mktime(&end))) == std::cv_status::no_timeout)
+        return;
+    }
+
+    OrderIds ids;
+    {
+      std::lock_guard<std::mutex> l(m_order_mutex);
+      for (const auto& [_, order_entry] : m_orders) {
+        if (static_cast<int>(order_entry.m_order->GetOrderType()) >= 10) {
+          ids.push_back(order_entry.m_order->GetOrderId());
+        }
+      }
+    }
+    CancelOrders(ids);
+  }
 }

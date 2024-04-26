@@ -10,6 +10,7 @@ enum class OrderType : uint8_t {
   GoodTillCancel,
   FillAndKill,
   Market,
+  GoodForDay = 10,
 };
 
 enum class Side : uint8_t {
