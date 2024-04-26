@@ -8,18 +8,17 @@ Trades Orderbook::AddOrder(const OrderPtr &order) {
 
   if (order->GetOrderType() == OrderType::Market) {
     if (order->GetSide() == Side::Buy && !m_asks.empty()) {
-      const auto& [price, _] = *m_asks.rbegin();
+      const auto &[price, _] = *m_asks.rbegin();
       order->PriceAdjust(price);
     } else if (order->GetSide() == Side::Sell && !m_bids.empty()) {
-      const auto& [price, _] = *m_bids.rbegin();
+      const auto &[price, _] = *m_bids.rbegin();
       order->PriceAdjust(price);
     } else {
       return {};
     }
   }
 
-  if (order->GetOrderType() == OrderType::FillAndKill &&
-      !Match(order->GetSide(), order->GetPrice()))
+  if (order->GetOrderType() == OrderType::FillAndKill && !Match(order->GetSide(), order->GetPrice()))
     return {};
 
   OrderPtrs::iterator iter;
@@ -73,11 +72,9 @@ OrderbookLevelInfos Orderbook::GetLevelInfos() const {
   LevelInfos ask_infos, bid_infos;
 
   auto CreateLevelInfo = [](Price price, OrderPtrs orders) -> LevelInfo {
-    return {price, std::accumulate(orders.begin(), orders.end(), (Quantity)0,
-                                   [](Quantity sum, OrderPtr order_ptr) {
-                                     return sum +
-                                            order_ptr->GetRemainingQuantity();
-                                   })};
+    return {price, std::accumulate(orders.begin(), orders.end(), (Quantity)0, [](Quantity sum, OrderPtr order_ptr) {
+              return sum + order_ptr->GetRemainingQuantity();
+            })};
   };
 
   for (const auto &[ask_price, ask_orders] : m_asks)
@@ -112,8 +109,7 @@ Trades Orderbook::MatchOrders() {
       auto &ask = ask_orders.front();
       auto &bid = bid_orders.front();
 
-      Quantity quantity =
-          std::min(ask->GetRemainingQuantity(), bid->GetRemainingQuantity());
+      Quantity quantity = std::min(ask->GetRemainingQuantity(), bid->GetRemainingQuantity());
       ask->Fill(quantity);
       bid->Fill(quantity);
 
@@ -131,9 +127,8 @@ Trades Orderbook::MatchOrders() {
       if (bid_orders.empty())
         m_bids.erase(bid_price);
 
-      trades.emplace_back(
-          TradeInfo{ask->GetOrderId(), ask->GetPrice(), quantity},
-          TradeInfo{bid->GetOrderId(), bid->GetPrice(), quantity});
+      trades.emplace_back(TradeInfo{ask->GetOrderId(), ask->GetPrice(), quantity},
+                          TradeInfo{bid->GetOrderId(), bid->GetPrice(), quantity});
     }
   }
 

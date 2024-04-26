@@ -13,8 +13,7 @@ using LevelInfos = std::vector<LevelInfo>;
 
 class OrderbookLevelInfos {
 public:
-  OrderbookLevelInfos(const LevelInfos &asks, const LevelInfos &bids)
-      : m_asks(asks), m_bids(bids) {}
+  OrderbookLevelInfos(const LevelInfos &asks, const LevelInfos &bids) : m_asks(asks), m_bids(bids) {}
 
   const LevelInfos &GetAsks() const { return m_asks; }
   const LevelInfos &GetBids() const { return m_bids; }

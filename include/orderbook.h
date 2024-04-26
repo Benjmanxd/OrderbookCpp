@@ -2,7 +2,6 @@
 
 #include <map>
 #include <unordered_map>
-#include <vector>
 
 #include "levelinfo.h"
 #include "order.h"
@@ -10,7 +9,7 @@
 
 class Orderbook {
 public:
-  Trades AddOrder(const OrderPtr&);
+  Trades AddOrder(const OrderPtr &);
   void CancelOrder(OrderId);
   Trades MatchOrder(OrderModify);
   OrderbookLevelInfos GetLevelInfos() const;

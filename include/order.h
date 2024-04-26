@@ -1,16 +1,14 @@
 #pragma once
 
-#include <memory>
 #include <list>
+#include <memory>
 
 #include "types.h"
 
 class Order {
 public:
-  Order(OrderType order_type, OrderId order_id, Side side, Price price,
-        Quantity quantity)
-      : m_order_type(order_type), m_order_id(order_id), m_side(side),
-        m_price(price), m_initial_quantity(quantity),
+  Order(OrderType order_type, OrderId order_id, Side side, Price price, Quantity quantity)
+      : m_order_type(order_type), m_order_id(order_id), m_side(side), m_price(price), m_initial_quantity(quantity),
         m_remaining_quantity(quantity) {}
 
   OrderType GetOrderType() const { return m_order_type; }
@@ -39,8 +37,7 @@ using OrderPtrs = std::list<OrderPtr>;
 class OrderModify {
 public:
   OrderModify(OrderId order_id, Side side, Price price, Quantity quantity)
-      : m_order_id(order_id), m_side(side), m_price(price),
-        m_quantity(quantity) {}
+      : m_order_id(order_id), m_side(side), m_price(price), m_quantity(quantity) {}
 
   OrderId GetOrderId() const { return m_order_id; }
   Side GetSide() const { return m_side; }

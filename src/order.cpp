@@ -1,6 +1,5 @@
 #include "order.h"
 
-#include <iostream>
 #include <stdexcept>
 
 void Order::Fill(Quantity quantity) {
@@ -11,8 +10,7 @@ void Order::Fill(Quantity quantity) {
 }
 
 OrderPtr OrderModify::Convert(OrderType order_type) const {
-  return std::make_shared<Order>(order_type, m_order_id, m_side, m_price,
-                                 m_quantity);
+  return std::make_shared<Order>(order_type, m_order_id, m_side, m_price, m_quantity);
 }
 
 void Order::PriceAdjust(Price price) {
