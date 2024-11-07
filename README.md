@@ -12,7 +12,7 @@
 ### Supported order types
 
 - [x] Fill and Kill (fill whatever quantity it can and kill the order) (IOC)
-- [ ] Fill or Kill (fill all quantity or none, then kill immediately) (AON, IOC)
+- [x] Fill or Kill (fill all quantity or none, then kill immediately) (AON, IOC)
 - [x] Good till Cancel (remain active until filled or cancelled)
 - [x] Good for Day (fill until the end of the trading day)
 - [x] Market (fill at best available price)

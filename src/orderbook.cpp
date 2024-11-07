@@ -3,6 +3,7 @@
 #include <chrono>
 #include <ctime>
 #include <numeric>
+#include <iostream>
 
 Orderbook::Orderbook() : m_prune_thread{[this] { PruneDayOrders(); }} {}
 
@@ -28,7 +29,10 @@ Trades Orderbook::AddOrder(const OrderPtr &order) {
     }
   }
 
-  if (order->GetOrderType() == OrderType::FillAndKill && !Match(order->GetSide(), order->GetPrice()))
+  if (order->GetOrderType() == OrderType::FillAndKill && !MatchPrice(order->GetSide(), order->GetPrice()))
+    return {};
+
+  if (order->GetOrderType() == OrderType::FillOrKill && !MatchQuantity(order->GetSide(), order->GetPrice(), order->GetRemainingQuantity()))
     return {};
 
   OrderPtrs::iterator iter;
@@ -50,10 +54,10 @@ void Orderbook::CancelOrder(OrderId order_id) {
   CancelOrderInternal(order_id);
 }
 
-void Orderbook::CancelOrders(const OrderIds& order_ids) {
+void Orderbook::CancelOrders(const OrderIds &order_ids) {
   std::scoped_lock l(m_order_mutex);
   for (OrderId id : order_ids) {
-    CancelOrder(id);
+    CancelOrderInternal(id);
   }
 }
 
@@ -108,9 +112,30 @@ OrderbookLevelInfos Orderbook::GetLevelInfos() const {
   return OrderbookLevelInfos{ask_infos, bid_infos};
 }
 
-bool Orderbook::Match(Side side, Price price) const {
-  return side == Side::Buy ? !m_asks.empty() && m_asks.begin()->first <= price
-                           : !m_bids.empty() && m_bids.begin()->first >= price;
+bool Orderbook::MatchPrice(Side side, Price price) const {
+  return side == Side::Buy ? !m_asks.empty() && m_asks.begin()->first <= price : !m_bids.empty() && m_bids.begin()->first >= price;
+}
+
+bool Orderbook::MatchQuantity(Side side, Price price, Quantity quantity) const {
+  Quantity orderbook_quantity = 0;
+  if (side == Side::Buy && m_asks.begin()->first <= price) {
+    auto cur_price = m_asks.begin();
+    while (cur_price != m_asks.end() && cur_price->first <= price && orderbook_quantity < quantity) {
+      orderbook_quantity += std::accumulate(cur_price->second.begin(), cur_price->second.end(), 0, [](Quantity accum, OrderPtr order) {
+        return accum + order->GetRemainingQuantity();
+      });
+      ++cur_price;
+    }
+  } else if (side == Side::Sell && m_bids.begin()->first >= price) {
+    auto cur_price = m_bids.begin();
+    while (cur_price != m_bids.end() && orderbook_quantity < quantity) {
+      orderbook_quantity += std::accumulate(cur_price->second.begin(), cur_price->second.end(), 0, [](Quantity accum, OrderPtr order) {
+        return accum + order->GetRemainingQuantity();
+      });
+      ++cur_price;
+    }
+  }
+  return orderbook_quantity >= quantity;
 }
 
 Trades Orderbook::MatchOrders() {
@@ -149,9 +174,7 @@ Trades Orderbook::MatchOrders() {
       if (bid_orders.empty())
         m_bids.erase(bid_price);
 
-      trades.emplace_back(
-          TradeInfo{ask->GetOrderId(), ask->GetPrice(), quantity},
-          TradeInfo{bid->GetOrderId(), bid->GetPrice(), quantity});
+      trades.emplace_back(TradeInfo{ask->GetOrderId(), ask->GetPrice(), quantity}, TradeInfo{bid->GetOrderId(), bid->GetPrice(), quantity});
     }
   }
 
@@ -178,23 +201,43 @@ void Orderbook::PruneDayOrders() {
   while (true) {
     const auto tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::tm *now = std::localtime(&tt);
-    std::tm end {0, 0, 16, now->tm_hour < 16 ? now->tm_mday : now->tm_mday+1, now->tm_mon, now->tm_year};
+    std::tm end{0, 0, 16, now->tm_hour < 16 ? now->tm_mday : now->tm_mday + 1, now->tm_mon, now->tm_year};
 
     {
       std::unique_lock<std::mutex> l(m_order_mutex);
-      if (m_closed.load(std::memory_order_acquire) || m_closed_cv.wait_until(l, std::chrono::system_clock::from_time_t(std::mktime(&end))) == std::cv_status::no_timeout)
+      if (m_closed.load(std::memory_order_acquire) ||
+          m_closed_cv.wait_until(l, std::chrono::system_clock::from_time_t(std::mktime(&end))) == std::cv_status::no_timeout)
         return;
     }
 
     OrderIds ids;
     {
       std::lock_guard<std::mutex> l(m_order_mutex);
-      for (const auto& [_, order_entry] : m_orders) {
+      for (const auto &[_, order_entry] : m_orders) {
         if (static_cast<int>(order_entry.m_order->GetOrderType()) >= 10) {
           ids.push_back(order_entry.m_order->GetOrderId());
         }
       }
     }
     CancelOrders(ids);
+  }
+}
+
+void Orderbook::Print() const {
+  std::cout << "<<<   Orderbook View   >>>" << std::endl;
+  std::cout << "Buy side:" << std::endl;
+  for (auto& [price, orders] : m_bids) {
+    Quantity quantity = std::accumulate(orders.begin(), orders.end(), 0, [](Quantity accum, OrderPtr order) {
+      return accum + order->GetRemainingQuantity();
+    });
+    std::cout << "Price: " << price << ", Quantity: " << quantity << std::endl;
+  }
+
+  std::cout << "Sell side:" << std::endl;
+  for (auto& [price, orders] : m_asks) {
+    Quantity quantity = std::accumulate(orders.begin(), orders.end(), 0, [](Quantity accum, OrderPtr order) {
+      return accum + order->GetRemainingQuantity();
+    });
+    std::cout << "Price: " << price << ", Quantity: " << quantity << std::endl;
   }
 }

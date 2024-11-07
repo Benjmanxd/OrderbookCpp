@@ -22,6 +22,7 @@ public:
   OrderbookLevelInfos GetLevelInfos() const;
 
   std::size_t Size() const { return m_orders.size(); }
+  void Print() const;
 
 private:
   struct OrderEntry {
@@ -29,7 +30,8 @@ private:
     OrderPtrs::iterator m_pos;
   };
   void CancelOrderInternal(OrderId);
-  bool Match(Side, Price) const;
+  bool MatchPrice(Side, Price) const;
+  bool MatchQuantity(Side, Price, Quantity) const;
   Trades MatchOrders();
   void PruneDayOrders();
 
