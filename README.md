@@ -20,10 +20,10 @@
 
 ### Build procedure
 
-**Please make sure to install cmake 3.27 in your system**
+**Please make sure to install cmake version >= 3.5 in your system**
 
 - Linux
 
   ```
-  # cmake -B . build && cmake --build build -j
+  # cmake . -B build && cmake --build build -j
   ```
