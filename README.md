@@ -25,5 +25,6 @@
 - Linux
 
   ```
+  # sudo apt-get update && apt-get install libglfw3 libglfw3-dev xorg xorg-dev // OpenGL, GLFW
   # cmake . -B build && cmake --build build -j
   ```

@@ -16,7 +16,7 @@ enum class OrderType : uint8_t {
   GoodForDay = 10,
 };
 
-const static std::unordered_map<OrderType, std::string> OrderTypeMap = {
+static const std::unordered_map<OrderType, std::string> OrderTypeMap = {
     {OrderType::GoodTillCancel, "Good Till Cancel"},
     {OrderType::FillAndKill, "Fill And Kill"},
     {OrderType::FillOrKill, "Fill Or Kill"},
@@ -24,7 +24,12 @@ const static std::unordered_map<OrderType, std::string> OrderTypeMap = {
     {OrderType::GoodForDay, "Good For Day"},
 };
 
+static const char* OrderTypeItems[] = { "GDC", "FAK", "FOK", "M", "GFD" };
+
 enum class Side : uint8_t {
   Buy = 0,
   Sell = 1,
+  SideCount = 2,
 };
+
+static const char* SideItems[] = { "Buy", "Side" };
