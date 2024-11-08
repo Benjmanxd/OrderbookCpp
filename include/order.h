@@ -53,3 +53,8 @@ private:
   Price m_price;
   Quantity m_quantity;
 };
+
+class OrderFactory {
+public:
+  static OrderPtr CreateOrder(const char* side, const char* type, Quantity quantity, Price price);
+};
