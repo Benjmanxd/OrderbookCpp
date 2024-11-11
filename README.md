@@ -6,7 +6,7 @@
 
 - [ ] support overfill checking
 - [ ] multithreading
-- [ ] gui interface
+- [x] gui interface
 - [ ] database (MySQL, Redis)
 
 ### Supported order types
@@ -22,7 +22,7 @@
 
 **Please make sure to install cmake version >= 3.5 in your system**
 
-- Linux
+- Ubuntu / Debian Linux
 
   ```
   # sudo apt-get update && apt-get install libglfw3 libglfw3-dev xorg xorg-dev // OpenGL, GLFW
