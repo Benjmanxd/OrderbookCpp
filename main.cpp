@@ -3,9 +3,17 @@
 #include <iostream>
 #include <string>
 
-#include "imgui.h"
+#if defined(__linux__)
+#define OS_LINUX
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#elif defined(_WIN32)
+#define OS_WINDOWS
+#elif defined (__APPLE__) && defined(__MACH__)
+#define OS_MACOS
+#endif
+
+#include "imgui.h"
 #include "imgui_util.h"
 #include "orderbook.h"
 #include "types.h"
@@ -91,16 +99,17 @@ int main(void) {
       ImGui::NewLine();
 
       if (ImGui::Button("Submit Order!")) {
-        bool input_valid = true;
+        bool input_valid = current_order_side && current_order_type;
         try {
           int current_order_price = std::stoi(current_order_price_input);
           int current_order_quantity = std::stoi(current_order_quantity_input);
+          if (!current_order_price || !current_order_quantity) input_valid = false;
         } catch (const std::invalid_argument& err) {
           input_valid = false;
         }
 
-        input_valid = input_valid && current_order_side && current_order_type;
         if (!input_valid) {
+          std::cout << "hihi" << std::endl;
           ImGui::SetNextWindowPos(ImVec2(400, 400));
           ImGui::SetNextWindowSize(ImVec2(200, 100));
           ImGui::OpenPopup("invalidinput");
@@ -108,15 +117,14 @@ int main(void) {
           auto order = OrderFactory::CreateOrder(current_order_side, current_order_type, std::stoi(current_order_quantity_input), std::stoi(current_order_price_input));
           orderbook.AddOrder(order);
         }
+      }
 
-        if (ImGui::BeginPopupModal("invalidinput")) {
-          TextCentered("Invalid Input!");
-          if (ButtonCentered("Ok")) {
-            input_valid = true;
-            ImGui::CloseCurrentPopup();
-          }
-          ImGui::EndPopup();
+      if (ImGui::BeginPopupModal("invalidinput")) {
+        TextCentered("Invalid Input!");
+        if (ButtonCentered("Ok")) {
+          ImGui::CloseCurrentPopup();
         }
+        ImGui::EndPopup();
       }
       ImGui::End();
     }
