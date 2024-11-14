@@ -1,9 +1,10 @@
 #include "orderbook.h"
 
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <numeric>
-#include <iostream>
+// #include <iostream>
 
 Orderbook::Orderbook() : m_prune_thread{[this] { PruneDayOrders(); }} {}
 
@@ -61,14 +62,15 @@ void Orderbook::CancelOrders(const OrderIds &order_ids) {
   }
 }
 
-Trades Orderbook::MatchOrder(OrderModify order) {
+template <typename order_class>
+Trades Orderbook::ModifyOrder(OrderModify<order_class> order) {
   auto iter = m_orders.find(order.GetOrderId());
   if (iter == m_orders.end())
     return {};
 
   const auto &[order_ptr, _] = iter->second;
   CancelOrder(order_ptr->GetOrderId());
-  return AddOrder(order.Convert(order_ptr->GetOrderType()));
+  return AddOrder(order.template Convert<order_class>());
 }
 
 void Orderbook::CancelOrderInternal(OrderId order_id) {
@@ -94,7 +96,7 @@ void Orderbook::CancelOrderInternal(OrderId order_id) {
   m_orders.erase(iter);
 }
 
-OrderbookLevelInfos Orderbook::GetLevelInfos() const {
+LevelInfoss Orderbook::GetLevelInfos() const {
   LevelInfos ask_infos, bid_infos;
 
   auto CreateLevelInfo = [](Price price, OrderPtrs orders) -> LevelInfo {
@@ -105,11 +107,12 @@ OrderbookLevelInfos Orderbook::GetLevelInfos() const {
 
   for (const auto &[ask_price, ask_orders] : m_asks)
     ask_infos.emplace_back(CreateLevelInfo(ask_price, ask_orders));
+  std::reverse(ask_infos.begin(), ask_infos.end());
 
   for (const auto &[bid_price, bid_orders] : m_bids)
     bid_infos.emplace_back(CreateLevelInfo(bid_price, bid_orders));
 
-  return OrderbookLevelInfos{ask_infos, bid_infos};
+  return {ask_infos, bid_infos};
 }
 
 bool Orderbook::MatchPrice(Side side, Price price) const {
@@ -222,22 +225,22 @@ void Orderbook::PruneDayOrders() {
     CancelOrders(ids);
   }
 }
-
-void Orderbook::Print() const {
-  std::cout << "<<<   Orderbook View   >>>" << std::endl;
-  std::cout << "Buy side:" << std::endl;
-  for (auto& [price, orders] : m_bids) {
-    Quantity quantity = std::accumulate(orders.begin(), orders.end(), 0, [](Quantity accum, OrderPtr order) {
-      return accum + order->GetRemainingQuantity();
-    });
-    std::cout << "Price: " << price << ", Quantity: " << quantity << std::endl;
-  }
-
-  std::cout << "Sell side:" << std::endl;
-  for (auto& [price, orders] : m_asks) {
-    Quantity quantity = std::accumulate(orders.begin(), orders.end(), 0, [](Quantity accum, OrderPtr order) {
-      return accum + order->GetRemainingQuantity();
-    });
-    std::cout << "Price: " << price << ", Quantity: " << quantity << std::endl;
-  }
-}
+//
+// void Orderbook::Print() const {
+//   std::cout << "<<<   Orderbook View   >>>" << std::endl;
+//   std::cout << "Buy side:" << std::endl;
+//   for (auto& [price, orders] : m_bids) {
+//     Quantity quantity = std::accumulate(orders.begin(), orders.end(), 0, [](Quantity accum, OrderPtr order) {
+//       return accum + order->GetRemainingQuantity();
+//     });
+//     std::cout << "Price: " << price << ", Quantity: " << quantity << std::endl;
+//   }
+//
+//   std::cout << "Sell side:" << std::endl;
+//   for (auto& [price, orders] : m_asks) {
+//     Quantity quantity = std::accumulate(orders.begin(), orders.end(), 0, [](Quantity accum, OrderPtr order) {
+//       return accum + order->GetRemainingQuantity();
+//     });
+//     std::cout << "Price: " << price << ", Quantity: " << quantity << std::endl;
+//   }
+// }

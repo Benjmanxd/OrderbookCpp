@@ -18,8 +18,9 @@ public:
   Trades AddOrder(const OrderPtr &);
   void CancelOrder(OrderId);
   void CancelOrders(const OrderIds &);
-  Trades MatchOrder(OrderModify);
-  OrderbookLevelInfos GetLevelInfos() const;
+  template <typename order_class> Trades ModifyOrder(OrderModify<order_class>);
+  // OrderbookLevelInfos GetLevelInfos() const;
+  LevelInfoss GetLevelInfos() const;
 
   std::size_t Size() const { return m_orders.size(); }
   void Print() const;

@@ -10,6 +10,7 @@ struct LevelInfo {
 };
 
 using LevelInfos = std::vector<LevelInfo>;
+using LevelInfoss = std::pair<LevelInfos, LevelInfos>;
 
 class OrderbookLevelInfos {
 public:
