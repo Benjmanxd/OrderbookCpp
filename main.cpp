@@ -1,6 +1,5 @@
 #include <GLFW/glfw3.h>
 #include <stdexcept>
-#include <iostream>
 #include <string>
 
 #if defined(__linux__)
@@ -24,7 +23,7 @@ int main(void) {
     return 1;
 
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-  GLFWwindow *window = glfwCreateWindow(1280, 720, "Orderbook Application", nullptr, nullptr);
+  GLFWwindow *window = glfwCreateWindow(1200, 800, "Orderbook Application", nullptr, nullptr);
   if (window == nullptr)
     return 1;
   glfwMakeContextCurrent(window);
@@ -109,18 +108,31 @@ int main(void) {
         }
 
         if (!input_valid) {
-          std::cout << "hihi" << std::endl;
           ImGui::SetNextWindowPos(ImVec2(400, 400));
           ImGui::SetNextWindowSize(ImVec2(200, 100));
-          ImGui::OpenPopup("invalidinput");
+          ImGui::OpenPopup("invalid_input");
         } else {
-          auto order = OrderFactory::CreateOrder(current_order_side, current_order_type, std::stoi(current_order_quantity_input), std::stoi(current_order_price_input));
-          orderbook.AddOrder(order);
+          orderbook.AddOrder(OrderFactory::CreateOrder(current_order_side, current_order_type, std::stoi(current_order_quantity_input), std::stoi(current_order_price_input)));
+          current_order_side = nullptr;
+          current_order_type = nullptr;
+          snprintf(current_order_quantity_input, 0, "0");
+          snprintf(current_order_price_input, 0, "0");
+          ImGui::SetNextWindowPos(ImVec2(200, 200));
+          ImGui::SetNextWindowSize(ImVec2(400, 300));
+          ImGui::OpenPopup("order_received");
         }
       }
 
-      if (ImGui::BeginPopupModal("invalidinput")) {
+      if (ImGui::BeginPopupModal("invalid_input")) {
         TextCentered("Invalid Input!");
+        if (ButtonCentered("Ok")) {
+          ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+      }
+
+      if (ImGui::BeginPopupModal("order_received")) {
+        TextCentered("Order Received!");
         if (ButtonCentered("Ok")) {
           ImGui::CloseCurrentPopup();
         }
@@ -130,14 +142,44 @@ int main(void) {
     }
 
     {
-      ImGui::Begin("Orderbook Preview"); // Create a window called "Hello, world!" and append into it.
+      ImGui::SetNextWindowPos(ImVec2(400, 0));
+      ImGui::SetNextWindowSize(ImVec2(800, 800));
+      ImGui::Begin("Orderbook"); // Create a window called "Hello, world!" and append into it.
 
       ImGui::Text("Hi this part is for the orderbook preview");
-      ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
 
       ImGui::SameLine();
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+      if (ImGui::BeginTable("Orderbook Preview", 3)) {
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::Text("Asks");
+        ImGui::TableNextColumn();
+        ImGui::Text("Price");
+        ImGui::TableNextColumn();
+        ImGui::Text("Bids");
+
+        auto [asks, bids] = orderbook.GetLevelInfos();
+        for (auto& ask_level : asks) {
+          ImGui::TableNextRow();
+          ImGui::TableNextColumn();
+          ImGui::Text("%d", ask_level.m_quantity);
+          ImGui::TableNextColumn();
+          ImGui::Text("%d", ask_level.m_price);
+          ImGui::TableNextColumn();
+        }
+        for (auto& bid_level : bids) {
+          ImGui::TableNextRow();
+          ImGui::TableNextColumn();
+          ImGui::TableNextColumn();
+          ImGui::Text("%d", bid_level.m_price);
+          ImGui::TableNextColumn();
+          ImGui::Text("%d", bid_level.m_quantity);
+        }
+        ImGui::EndTable();
+      }
       ImGui::End();
     }
 
