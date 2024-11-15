@@ -142,8 +142,10 @@ void Application::Run() {
           m_orderbook->AddOrder(OrderFactory::CreateOrder(current_order_side, current_order_type, std::stoi(current_order_quantity_input), std::stoi(current_order_price_input)));
           current_order_side = nullptr;
           current_order_type = nullptr;
-          snprintf(current_order_quantity_input, 0, "0");
-          snprintf(current_order_price_input, 0, "0");
+          memset(current_order_quantity_input, 0, sizeof(current_order_quantity_input));
+          current_order_quantity_input[0] = '0';
+          memset(current_order_price_input, 0, sizeof(current_order_price_input));
+          current_order_price_input[0] = '0';
           ImGui::SetNextWindowPos(ImVec2(200, 200));
           ImGui::SetNextWindowSize(ImVec2(400, 300));
           ImGui::OpenPopup("order_received");
