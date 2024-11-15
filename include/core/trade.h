@@ -4,6 +4,7 @@
 
 #include "types.h"
 
+namespace OrderbookCore {
 struct TradeInfo {
   OrderId m_order_id;
   Price m_price;
@@ -23,3 +24,4 @@ private:
 };
 
 using Trades = std::vector<Trade>;
+}

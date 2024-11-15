@@ -52,4 +52,4 @@ include_directories(include)
 add_subdirectory(src)
 
 add_executable(orderbook main.cpp ${IMGUI_SRC_FILES})
-target_link_libraries(orderbook PRIVATE OrderbookLib OpenGL glfw)
+target_link_libraries(orderbook PRIVATE OrderbookApp OrderbookCore OpenGL glfw)

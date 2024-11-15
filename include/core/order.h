@@ -6,6 +6,7 @@
 
 #include "types.h"
 
+namespace OrderbookCore {
 class OrderInterface {
 public:
   virtual OrderType GetOrderType() const = 0;
@@ -104,3 +105,4 @@ class OrderFactory {
 public:
   static OrderPtr CreateOrder(const char *side, const char *type, Quantity quantity, Price price);
 };
+}

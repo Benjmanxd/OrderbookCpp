@@ -1,9 +1,11 @@
-#include "order.h"
+#include "core/order.h"
 
+#include <cstring>
 #include <stdexcept>
 
-#include "util.h"
+#include "core/util.h"
 
+namespace OrderbookCore {
 template <typename order_class, Side side> void Order<order_class, side>::Fill(Quantity quantity) {
   if (quantity > m_remaining_quantity)
     throw std::logic_error("Order cannot be filled more than its remaining quantity");
@@ -44,4 +46,5 @@ OrderPtr OrderFactory::CreateOrder(const char *side, const char *type, Quantity 
   default:
     return nullptr;
   }
+}
 }

@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 
+namespace OrderbookCore {
 using Price = int32_t;
 using Quantity = uint32_t;
 using OrderId = uint64_t;
@@ -35,3 +36,4 @@ enum class Side : uint8_t {
 };
 
 inline const char* SideItems[] = { "Buy", "Side" };
+}

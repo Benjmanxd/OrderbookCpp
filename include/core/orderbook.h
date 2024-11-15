@@ -11,6 +11,7 @@
 #include "order.h"
 #include "trade.h"
 
+namespace OrderbookCore {
 class Orderbook {
 public:
   Orderbook();
@@ -45,3 +46,4 @@ private:
   std::map<Price, OrderPtrs, std::greater<Price>> m_bids;
   std::unordered_map<OrderId, OrderEntry> m_orders;
 };
+}

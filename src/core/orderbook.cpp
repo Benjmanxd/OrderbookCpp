@@ -1,4 +1,4 @@
-#include "orderbook.h"
+#include "core/orderbook.h"
 
 #include <algorithm>
 #include <chrono>
@@ -6,6 +6,7 @@
 #include <numeric>
 // #include <iostream>
 
+namespace OrderbookCore {
 Orderbook::Orderbook() : m_prune_thread{[this] { PruneDayOrders(); }} {}
 
 Orderbook::~Orderbook() {
@@ -244,3 +245,4 @@ void Orderbook::PruneDayOrders() {
 //     std::cout << "Price: " << price << ", Quantity: " << quantity << std::endl;
 //   }
 // }
+}

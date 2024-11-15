@@ -4,6 +4,7 @@
 
 #include "types.h"
 
+namespace OrderbookCore {
 struct LevelInfo {
   Price m_price;
   Quantity m_quantity;
@@ -25,3 +26,4 @@ private:
   LevelInfos m_asks;
   LevelInfos m_bids;
 };
+}
