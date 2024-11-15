@@ -35,5 +35,5 @@ enum class Side : uint8_t {
   Unknown = 3,
 };
 
-inline const char* SideItems[] = { "Buy", "Side" };
+inline const char* SideItems[] = { "Buy", "Sell" };
 }
