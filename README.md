@@ -8,6 +8,7 @@
 - [ ] multithreading
 - [x] gui interface
 - [ ] database (MySQL, Redis)
+- [ ] add thirdparty specification on data porting
 
 ### Supported order types
 
