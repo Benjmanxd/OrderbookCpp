@@ -89,6 +89,7 @@ void Application::Run() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    static const char *current_symbol = nullptr;
     {
       ImGui::SetNextWindowPos(ImVec2(0, 0));
       ImGui::SetNextWindowSize(ImVec2(400, 400));
@@ -155,6 +156,7 @@ void Application::Run() {
           ImGui::OpenPopup("invalid_input");
         } else {
           m_orderbook_map[current_order_symbol]->AddOrder(OrderFactory::CreateOrder(current_order_side, current_order_type, std::stoi(current_order_quantity_input), std::stoi(current_order_price_input)));
+          current_symbol = current_order_symbol;
           current_order_symbol = nullptr;
           current_order_side = nullptr;
           current_order_type = nullptr;
@@ -196,6 +198,7 @@ void Application::Run() {
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
       static const char *current_preview_symbol = nullptr;
+      if (current_symbol) current_preview_symbol = current_symbol;
       if (ImGui::BeginCombo("Symbol", current_preview_symbol, ImGuiComboFlags_HeightRegular)) {
         for (int n = 0; n < IM_ARRAYSIZE(m_symbols); ++n) {
           bool is_selected = (current_preview_symbol == m_symbols[n]);
@@ -203,6 +206,7 @@ void Application::Run() {
             current_preview_symbol = m_symbols[n];
           if (is_selected) {
             ImGui::SetItemDefaultFocus();
+            current_symbol = nullptr;
           }
         }
         ImGui::EndCombo();
