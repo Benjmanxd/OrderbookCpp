@@ -1,5 +1,6 @@
 #include <GLFW/glfw3.h>
 #include <string>
+#include <unordered_map>
 
 #include "core/orderbook.h"
 
@@ -25,9 +26,9 @@ namespace OrderbookApp {
       void Shutdown();
 
       ApplicationSpecification m_app_spec;
-      GLFWwindow* m_window_handle = nullptr;
-      bool m_running = false;
-
-      OrderbookCore::Orderbook* m_orderbook;
+      GLFWwindow* m_window_handle { nullptr };
+      bool m_running { false };
+      std::unordered_map<const char*, Orderbook*> m_orderbook_map;
+      static inline const char* m_symbols[] { "apple", "netflix", "google", "meta", "morgan stanley" };
   };
 }

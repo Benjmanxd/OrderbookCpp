@@ -21,7 +21,9 @@ static OrderbookApp::Application *s_instance = nullptr;
 namespace OrderbookApp {
 Application::Application(const ApplicationSpecification &app_spec) : m_app_spec(app_spec) {
   s_instance = this;
-  m_orderbook = new OrderbookCore::Orderbook();
+  for (auto symbol : m_symbols) {
+    m_orderbook_map.try_emplace(symbol, new Orderbook());
+  }
   Init();
 }
 
@@ -59,7 +61,9 @@ void Application::Shutdown() {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 
-  delete m_orderbook;
+  for (auto& [_, orderbook] : m_orderbook_map) {
+    delete orderbook;
+  }
 }
 
 void Application::Run() {
@@ -90,6 +94,19 @@ void Application::Run() {
       ImGui::SetNextWindowSize(ImVec2(400, 400));
       ImGui::Begin("Add Order");
 
+      static const char *current_order_symbol = nullptr;
+      if (ImGui::BeginCombo("Symbol", current_order_symbol, ImGuiComboFlags_HeightRegular)) {
+        for (int n = 0; n < IM_ARRAYSIZE(m_symbols); ++n) {
+          bool is_selected = (current_order_symbol == m_symbols[n]);
+          if (ImGui::Selectable(m_symbols[n], is_selected))
+            current_order_symbol = m_symbols[n];
+          if (is_selected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      ImGui::NewLine();
+
       static const char *current_order_side = nullptr;
       if (ImGui::BeginCombo("Side", current_order_side, ImGuiComboFlags_HeightRegular)) {
         for (int n = 0; n < IM_ARRAYSIZE(SideItems); ++n) {
@@ -104,7 +121,7 @@ void Application::Run() {
       ImGui::NewLine();
 
       static const char *current_order_type = nullptr;
-      if (ImGui::BeginCombo("Order Type", current_order_type)) {
+      if (ImGui::BeginCombo("Order Type", current_order_type, ImGuiComboFlags_HeightRegular)) {
         for (int n = 0; n < IM_ARRAYSIZE(OrderTypeItems); ++n) {
           bool is_selected = (current_order_type == OrderTypeItems[n]);
           if (ImGui::Selectable(OrderTypeItems[n], is_selected))
@@ -125,7 +142,7 @@ void Application::Run() {
       ImGui::NewLine();
 
       if (ImGui::Button("Submit Order!")) {
-        bool input_valid = current_order_side && current_order_type;
+        bool input_valid = current_order_symbol && current_order_side && current_order_type;
         try {
           int current_order_price = std::stoi(current_order_price_input);
           int current_order_quantity = std::stoi(current_order_quantity_input);
@@ -135,24 +152,21 @@ void Application::Run() {
         }
 
         if (!input_valid) {
-          ImGui::SetNextWindowPos(ImVec2(400, 400));
-          ImGui::SetNextWindowSize(ImVec2(200, 100));
           ImGui::OpenPopup("invalid_input");
         } else {
-          m_orderbook->AddOrder(OrderFactory::CreateOrder(current_order_side, current_order_type, std::stoi(current_order_quantity_input), std::stoi(current_order_price_input)));
+          m_orderbook_map[current_order_symbol]->AddOrder(OrderFactory::CreateOrder(current_order_side, current_order_type, std::stoi(current_order_quantity_input), std::stoi(current_order_price_input)));
+          current_order_symbol = nullptr;
           current_order_side = nullptr;
           current_order_type = nullptr;
           memset(current_order_quantity_input, 0, sizeof(current_order_quantity_input));
           current_order_quantity_input[0] = '0';
           memset(current_order_price_input, 0, sizeof(current_order_price_input));
           current_order_price_input[0] = '0';
-          ImGui::SetNextWindowPos(ImVec2(200, 200));
-          ImGui::SetNextWindowSize(ImVec2(400, 300));
           ImGui::OpenPopup("order_received");
         }
       }
 
-      if (ImGui::BeginPopupModal("invalid_input")) {
+      if (ImGui::BeginPopup("invalid_input")) {
         TextCentered("Invalid Input!");
         if (ButtonCentered("Ok")) {
           ImGui::CloseCurrentPopup();
@@ -160,7 +174,7 @@ void Application::Run() {
         ImGui::EndPopup();
       }
 
-      if (ImGui::BeginPopupModal("order_received")) {
+      if (ImGui::BeginPopup("order_received")) {
         TextCentered("Order Received!");
         if (ButtonCentered("Ok")) {
           ImGui::CloseCurrentPopup();
@@ -181,7 +195,21 @@ void Application::Run() {
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
-      if (ImGui::BeginTable("Orderbook Preview", 3)) {
+      static const char *current_preview_symbol = nullptr;
+      if (ImGui::BeginCombo("Symbol", current_preview_symbol, ImGuiComboFlags_HeightRegular)) {
+        for (int n = 0; n < IM_ARRAYSIZE(m_symbols); ++n) {
+          bool is_selected = (current_preview_symbol == m_symbols[n]);
+          if (ImGui::Selectable(m_symbols[n], is_selected))
+            current_preview_symbol = m_symbols[n];
+          if (is_selected) {
+            ImGui::SetItemDefaultFocus();
+          }
+        }
+        ImGui::EndCombo();
+      }
+      ImGui::NewLine();
+
+      if (current_preview_symbol && ImGui::BeginTable("Orderbook Preview", 3)) {
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::Text("Asks");
@@ -190,7 +218,7 @@ void Application::Run() {
         ImGui::TableNextColumn();
         ImGui::Text("Bids");
 
-        auto [asks, bids] = m_orderbook->GetLevelInfos();
+        auto [asks, bids] = m_orderbook_map[current_preview_symbol]->GetLevelInfos();
         for (auto& ask_level : asks) {
           ImGui::TableNextRow();
           ImGui::TableNextColumn();
